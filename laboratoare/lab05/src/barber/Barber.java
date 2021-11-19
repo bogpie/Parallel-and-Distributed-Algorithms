@@ -7,10 +7,23 @@ public class Barber extends Thread {
 
         do {
             // TODO
+            try {
+                Main.clientsSem.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                Main.chairsSem.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
             Main.chairs++;
 
             // TODO
+            Main.barber_ready.release();
+            Main.chairsSem.release();
 
             try {
                 Thread.sleep(100);

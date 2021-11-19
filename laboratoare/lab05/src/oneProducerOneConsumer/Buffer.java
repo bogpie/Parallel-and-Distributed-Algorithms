@@ -2,12 +2,31 @@ package oneProducerOneConsumer;
 
 public class Buffer {
     private int a;
+	boolean isFull = false;
 
-    void put(int value) {
-        a = value;
-    }
+	synchronized void put(int value) {
+		while(isFull) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		a = value;
+		isFull = true;
+		notify();
+	}
 
-    int get() {
-        return a;
-    }
+	synchronized int get() {
+		while (!isFull) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		isFull = false;
+		notify();
+		return a;
+	}
 }

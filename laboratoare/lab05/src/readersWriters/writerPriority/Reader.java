@@ -20,9 +20,30 @@ public class Reader extends Thread {
 
         do {
             // TODO
+            try {
+                Main.enter.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
+            if (Main.currentWriters > 0 || Main.waitingWriters > 0) {
+                Main.waitingReaders++;
+                Main.enter.release();
+                try {
+                    Main.sem_reader.acquire();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
             Main.currentReaders++;
+
             // TODO
+            if (Main.waitingReaders > 0) {
+                Main.waitingReaders--;
+                Main.sem_reader.release();
+            } else if (Main.waitingReaders == 0) {
+                Main.enter.release();
+            }
 
             try {
                 Thread.sleep(100);
@@ -33,9 +54,20 @@ public class Reader extends Thread {
             Main.hasRead[id] = true;
 
             // TODO
+            try {
+                Main.enter.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             Main.currentReaders--;
 
             // TODO
+            if (Main.currentReaders == 0 && Main.waitingWriters > 0) {
+                Main.waitingWriters--;
+                Main.sem_writer.release();
+            } else if (Main.currentReaders > 0 || Main.waitingWriters == 0) {
+                Main.enter.release();
+            }
 
         } while (!Main.hasRead[id]);
     }

@@ -11,6 +11,11 @@ public class Client extends Thread {
     @Override
     public void run() {
         // TODO
+        try {
+            Main.chairsSem.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         if (Main.chairs > 0) {
             // client occupies a seat
@@ -20,12 +25,20 @@ public class Client extends Thread {
             System.out.println("Available seats: " + Main.chairs);
 
             // TODO
+            Main.clientsSem.release();
+            Main.chairsSem.release();
+            try {
+                Main.barber_ready.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
             System.out.println("Client " + id + " is served by the barber");
 
             Main.leftClients[id] = Main.SERVED_CLIENT;
         } else {
             // TODO
+            Main.chairsSem.release();
             System.out.println("Client " + id + " left unserved");
             Main.leftClients[id] = Main.UNSERVED_CLIENT;
         }

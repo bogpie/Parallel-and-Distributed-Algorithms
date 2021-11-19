@@ -3,6 +3,9 @@ package bug6;
 public class MyThread extends Thread {
     @Override
     public void run() {
-        Singleton.getInstance();
+        synchronized (Main.obj) {
+            Singleton instance = Singleton.getInstance();
+
+        }
     }
 }

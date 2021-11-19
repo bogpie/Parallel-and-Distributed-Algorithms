@@ -3,12 +3,17 @@
 #include <pthread.h>
 #include <math.h>
 
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 int L; // latura matricei
 int N; // numarul de elemente de sortat
 int P;
 int *v;
 int *vQSort;
 int **M;
+
+int *aux;
+pthread_barrier_t barrier;
 
 void compare_vectors(int *a, int *b) {
 	int i;
@@ -88,9 +93,11 @@ void get_args(int argc, char **argv)
 void init()
 {
 	int i, j;
-	v = malloc(sizeof(int) * N);
-	vQSort = malloc(sizeof(int) * N);
-	M = malloc(sizeof(int*) * L);
+	v = (int*)malloc(sizeof(int) * N);
+	vQSort = (int*)malloc(sizeof(int) * N);
+	M = (int**)malloc(sizeof(int*) * L);
+
+	aux = (int*)malloc(sizeof(int) * L);
 
 	if (v == NULL || vQSort == NULL || M == NULL) {
 		printf("Eroare la malloc!");
@@ -98,7 +105,7 @@ void init()
 	}
 
 	for (i = 0; i < L; i++) {
-		M[i] = malloc(sizeof(int) * L);
+		M[i] = (int*)malloc(sizeof(int) * L);
 	}
 
 	srand(42);
@@ -123,27 +130,79 @@ void print()
 	compare_vectors(v, vQSort);	
 }
 
-void *thread_function(void *arg)
+void* thread_function(void* arg)
 {
-	int thread_id = *(int *)arg;
+    int id = *(int*)arg;
+    int start = id * ceil((double)L / P);
+    int end = MIN(L, (id + 1) * ceil((double)L / P));
+	
+	int startEven, endEven, startOdd, endOdd;
 
-	// implementati aici shear sort paralel
+	if (start % 2 == 0) {
+		startEven = start;
+		startOdd = start + 1;
+	} else {
+		startEven = start + 1;
+		startOdd = start;
+	}
+
+	if (end % 2 == 0) {
+		endEven = end;
+		endOdd = end + 1;
+	} else {
+		endEven = end + 1;
+		endOdd = end;
+	}
+
+	endEven = MIN(N - 1, endEven);
+	endOdd = MIN(N - 1, endOdd);
+
+	
+	for (int k = 0; k < log2(N) + 1; k++) {
+		for (int i = startOdd; i < endOdd; i += 2) {
+			qsort(M[i], L, sizeof(int), cmpdesc);
+		}
+
+		for (int i = startEven; i < endEven; i += 2) {
+			qsort(M[i], L, sizeof(int), cmp);
+		}
+
+		pthread_barrier_wait(&barrier);
+		// wait
+
+		for (int i = start; i < end; i++) {
+			for (int j = 0; j < L; j++) {
+				aux[j] = M[j][i];
+			}
+
+			qsort(aux, L, sizeof(int), cmp);
+
+			for (int j = 0; j < L; j++) {
+				M[j][i] = aux[j];
+			}
+		}
+
+		pthread_barrier_wait(&barrier);
+	}
 
 	pthread_exit(NULL);
 }
+
 
 int main(int argc, char *argv[])
 {
 	get_args(argc, argv);
 	init();
 
-	int i, j, k, aux[L];
+	int i;
+	//int j, k, aux[L];
 	pthread_t tid[P];
 	int thread_id[P];
 
 	// se sorteaza etalonul
 	copy_matrix_in_vector(vQSort, M);
 	qsort(vQSort, N, sizeof(int), cmp);
+	pthread_barrier_init(&barrier, NULL, P);
 
 	// se creeaza thread-urile
 	for (i = 0; i < P; i++) {
@@ -156,31 +215,31 @@ int main(int argc, char *argv[])
 		pthread_join(tid[i], NULL);
 	}
 
-	// shear sort clasic - trebuie paralelizat
-	for (k = 0; k < log(N) + 1; k++) {
-		// se sorteaza liniile pare crescator
-		// se sorteaza liniile impare descrescator
-		for (i = 0; i < L; i++) {
-			if (i % 2) {
-				qsort(M[i], L, sizeof(int), cmpdesc);
-			} else {
-				qsort(M[i], L, sizeof(int), cmp);
-			}
-		}
+	// // shear sort clasic - trebuie paralelizat
+	// for (k = 0; k < log(N) + 1; k++) {
+	// 	// se sorteaza liniile pare crescator
+	// 	// se sorteaza liniile impare descrescator
+	// 	for (i = 0; i < L; i++) {
+	// 		if (i % 2) {
+	// 			qsort(M[i], L, sizeof(int), cmpdesc);
+	// 		} else {
+	// 			qsort(M[i], L, sizeof(int), cmp);
+	// 		}
+	// 	}
 
-		// se sorteaza coloanele descrescator
-		for (i = 0; i < L; i++) {
-			for (j = 0; j < L; j++) {
-				aux[j] = M[j][i];
-			}
+	// 	// se sorteaza coloanele descrescator
+	// 	for (i = 0; i < L; i++) {
+	// 		for (j = 0; j < L; j++) {
+	// 			aux[j] = M[j][i];
+	// 		}
 
-			qsort(aux, L, sizeof(int), cmp);
+	// 		qsort(aux, L, sizeof(int), cmp);
 
-			for (j = 0; j < L; j++) {
-				M[j][i] = aux[j];
-			}
-		}
-	}
+	// 		for (j = 0; j < L; j++) {
+	// 			M[j][i] = aux[j];
+	// 		}
+	// 	}
+	// }
 
 	// se afiseaza matricea
 	// se afiseaza vectorul etalon
@@ -194,6 +253,7 @@ int main(int argc, char *argv[])
 		free(M[i]);
 	}
 	free(M);
+    pthread_barrier_destroy(&barrier);
 
 	return 0;
 }

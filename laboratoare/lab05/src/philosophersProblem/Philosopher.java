@@ -21,11 +21,25 @@ public class Philosopher implements Runnable {
 
     @Override
     public void run() {
-        synchronized (leftFork) {
-            sleep(); // delay added to make sure the dead-lock is visible
-            synchronized (rightFork) {
-                System.out.println("Philosopher " + id + " is eating");
+        /// Un filozof (primul) ia furculitele in ordine normala (aici L-R)
+        /// A lua o furculita <=> a face lock pe acel obiect
+        if (id == 0) {
+            synchronized (leftFork) {
+                sleep(); // delay added to make sure the dead-lock is visible
+                synchronized (rightFork) {
+                    System.out.println("Philosopher " + id + " is eating");
+                }
             }
+        } else {
+            // Ceilalti au ordinea normala (aici right left)
+            // Asteptarea se face asadar evitand deadlock
+            synchronized (rightFork) {
+                sleep(); // delay added to make sure the dead-lock is visible
+                synchronized (leftFork) {
+                    System.out.println("Philosopher " + id + " is eating");
+                }
+            }
+
         }
     }
 }

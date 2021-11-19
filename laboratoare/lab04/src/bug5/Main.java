@@ -4,6 +4,7 @@ package bug5;
  * DO NOT MODIFY
  */
 public class Main {
+//    static final int N = 1000000; // Try a smaller value for N
     static final int N = 1000000; // Try a smaller value for N
     static final Object lockA = new Object();
     static final Object lockB = new Object();

@@ -1,0 +1,3 @@
+C:/Users/bogdan.piele/OneDrive - Universitatea Politehnica Bucuresti/ACS/APD/teme/tema1/cmake-build-debug/CMakeFiles/tema1.dir
+C:/Users/bogdan.piele/OneDrive - Universitatea Politehnica Bucuresti/ACS/APD/teme/tema1/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/bogdan.piele/OneDrive - Universitatea Politehnica Bucuresti/ACS/APD/teme/tema1/cmake-build-debug/CMakeFiles/rebuild_cache.dir

@@ -17,7 +17,7 @@ public class MyThreadA implements Runnable {
                 Main.valueA++;
             }
             synchronized (Main.lockB) {
-                for (int i = 0; i < Main.N; i++) {
+                for (int j = 0; j < Main.N; j++) {
                     Main.valueB++;
                 }
             }

@@ -2,6 +2,7 @@ package bug6;
 
 public class Main {
     public static int NUMBER_OF_THREADS = 8;
+    static final Object obj = new Object();
 
     public static void main(String[] args) {
         Thread[] threads = new Thread[NUMBER_OF_THREADS];

@@ -20,6 +20,10 @@ public class Main {
     public static CyclicBarrier barrier = new CyclicBarrier(READERS + WRITERS);
 
     // TODO: add semaphores
+    public static Semaphore sem_writer = new Semaphore(0);
+    public static Semaphore sem_reader = new Semaphore(0);
+    public static Semaphore enter = new Semaphore(1);
+
 
     public static void main(String[] args) throws InterruptedException {
         Thread[] readers = new Reader[READERS];

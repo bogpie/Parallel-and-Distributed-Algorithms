@@ -15,6 +15,8 @@ public class Main {
     public static CyclicBarrier barrier = new CyclicBarrier(READERS + WRITERS);
 
     // TODO: add semaphores
+    public static Semaphore readWriteSem = new Semaphore(1);
+    public static Semaphore mutexNumberOfReaders = new Semaphore(1);
 
     public static void main(String[] args) throws InterruptedException {
         Thread[] readers = new Reader[READERS];
@@ -28,19 +30,19 @@ public class Main {
             writers[i] = new Writer(i);
         }
 
-        for (var reader: readers) {
+        for (var reader : readers) {
             reader.start();
         }
 
-        for (var writer: writers) {
+        for (var writer : writers) {
             writer.start();
         }
 
-        for (var reader: readers) {
+        for (var reader : readers) {
             reader.join();
         }
 
-        for (var writer: writers) {
+        for (var writer : writers) {
             writer.join();
         }
     }

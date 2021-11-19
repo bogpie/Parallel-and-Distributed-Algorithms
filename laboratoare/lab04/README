@@ -1,0 +1,43 @@
+2.1
+Am modificat .run() in .start(), asigurandu-ne ca se vor crea thread-uri
+diferite, iar executarea functiei nu se va reduce doar la blocul reprezentat de
+metoda.
+
+2.2
+Nu se blochează fiindcă sunt două monitor lock-uri imbricate (mutex), iar
+thread-ului unic îi este permis să se execute. Monitor lock-ul, deși este
+refăcut, este tot pe același obiect.
+În același timp, avem de-a face cu o funcție non-statică ceea ce înseamnă că va
+fi blocată instanța clasei respective (obiectul).
+
+2.3
+Regiunea critică definește două obiecte de tip string. Conform funcționalității
+Java, ele corespund aceleiași zone de memorie pentru că au conținut identic.
+Rezolvarea bug-ului se face folosind două string-uri de conținut diferit.
+
+2.4
+Variabila keepRunning este cache-uită, iar modificarea sa în funcția main a
+programului nu se propagă asupra thread-ului Main. De aceea, rezolvăm bug-ul
+prin adăugarea keyword-ului volatile.
+
+2.5
+În forma inițială, la valori mari ale lui N, există șansa să avem un deadlock:
+-   Thread-ul A încearcă să acceseze o zonă critică delimitată pe baza
+obiectului lockB
+-   Thread-ul B deja a acesat înainte o zonă critică delimitată pe baza
+obiectului lockB, dar nu a finalizat execuția operațiilor
+
+Prin urmare, o soluție este să inversăm obiectele parametri ale synchronized în
+unul dintre thread-uri (spre exemplu, MyThreadB).
+
+De asemenea, pentru claritate, am modificat al doilea for, folosind o nouă
+variabilă j, în loc de i.
+
+2.6
+Bug-ul se declanșează deoarece mai multe thread-uri pot rula în același timp.
+Deci, pe stiva de rulare a cel puțin două thread-uri, instance este null,
+instanțarea nefiind unică.
+Așadar,trebuie să implementăm un mutex pentru a lăsa timp primului thread ce
+trece de zăvor să schimbe variabila din null în noua instanță.
+Obiectul parametru pentru syncronized a fost declarat ca variabila statică în
+main.

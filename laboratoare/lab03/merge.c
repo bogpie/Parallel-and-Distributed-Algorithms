@@ -83,9 +83,9 @@ void get_args(int argc, char **argv)
 void init()
 {
 	int i;
-	v = malloc(sizeof(int) * N);
-	vQSort = malloc(sizeof(int) * N);
-	vNew = malloc(sizeof(int) * N);
+	v = (int*)malloc(sizeof(int) * N);
+	vQSort = (int*)malloc(sizeof(int) * N);
+	vNew = (int*)malloc(sizeof(int) * N);
 
 	if (v == NULL || vQSort == NULL || vNew == NULL) {
 		printf("Eroare la malloc!");

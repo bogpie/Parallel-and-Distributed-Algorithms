@@ -10,7 +10,7 @@ public class MyThread implements Runnable {
     static int i;
 
     @Override
-    public void run() {
+    public synchronized void run() {
         synchronized (this) {
             synchronized (this) {
                 i++;

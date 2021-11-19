@@ -4,7 +4,8 @@ package oneProducerOneConsumer;
  * DO NOT MODIFY
  */
 public class Main {
-    public static final int N = 1000000;
+	// public static final int N = 1000000;
+	public static final int N = 10000;
 
     public static void main(String[] args) {
         Buffer buffer = new Buffer();

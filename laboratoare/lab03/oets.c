@@ -3,10 +3,15 @@
 #include <pthread.h>
 #include <math.h>
 
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 int N;
 int P;
 int *v;
 int *vQSort;
+int sorted = 0;
+
+pthread_barrier_t barrier;
 
 void compare_vectors(int *a, int *b) {
 	int i;
@@ -52,8 +57,8 @@ void get_args(int argc, char **argv)
 void init()
 {
 	int i;
-	v = malloc(sizeof(int) * N);
-	vQSort = malloc(sizeof(int) * N);
+	v = (int*)malloc(sizeof(int) * N);
+	vQSort = (int*)malloc(sizeof(int) * N);
 
 	if (v == NULL || vQSort == NULL) {
 		printf("Eroare la malloc!");
@@ -64,6 +69,7 @@ void init()
 
 	for (i = 0; i < N; i++)
 		v[i] = rand() % N;
+	
 }
 
 void print()
@@ -75,12 +81,63 @@ void print()
 	compare_vectors(v, vQSort);
 }
 
-void *thread_function(void *arg)
+void swap(int *a, int *b) {
+	int aux;
+	aux = *a;
+	*a = *b;
+	*b = aux;
+}
+
+void* bubbleSort(void* arg)
 {
-	int thread_id = *(int *)arg;
+    int id          = *(int*)arg;
+    int start = id * ceil((double)N / P);
+    int end = MIN(N, (id + 1) * ceil((double)N / P));
+	
+	int startEven, endEven, startOdd, endOdd;
 
-	// implementati aici OETS paralel
+	if (start % 2 == 0) {
+		startEven = start;
+		startOdd = start + 1;
+	} else {
+		startEven = start + 1;
+		startOdd = start;
+	}
 
+	if (end % 2 == 0) {
+		endEven = end;
+		endOdd = end + 1;
+	} else {
+		endEven = end + 1;
+		endOdd = end;
+	}
+
+	endEven = MIN(N - 1, endEven);
+	endOdd = MIN(N - 1, endOdd);
+
+
+    while(!sorted) {
+        pthread_barrier_wait(&barrier);
+        sorted = 1;
+
+        for (int i = startEven; i < end; i += 2) {
+			if(v[i] > v[i + 1]) {
+				swap(&v[i], &v[i + 1]);
+				sorted = 0;
+			}
+		}
+
+        pthread_barrier_wait(&barrier);
+
+        for (int i = startOdd; i < end; i += 2) {
+			if(v[i] > v[i + 1]) {
+				swap(&v[i], &v[i + 1]);
+				sorted = 0;
+			}
+		}
+
+        pthread_barrier_wait(&barrier);
+    }
 	pthread_exit(NULL);
 }
 
@@ -89,19 +146,22 @@ int main(int argc, char *argv[])
 	get_args(argc, argv);
 	init();
 
-	int i, aux;
+	int i;
 	pthread_t tid[P];
 	int thread_id[P];
 
+	display_vector(v);
 	// se sorteaza vectorul etalon
 	for (i = 0; i < N; i++)
 		vQSort[i] = v[i];
 	qsort(vQSort, N, sizeof(int), cmp);
 
+	pthread_barrier_init(&barrier, NULL, P);
+
 	// se creeaza thread-urile
 	for (i = 0; i < P; i++) {
 		thread_id[i] = i;
-		pthread_create(&tid[i], NULL, thread_function, &thread_id[i]);
+		pthread_create(&tid[i], NULL, bubbleSort, &thread_id[i]);
 	}
 
 	// se asteapta thread-urile
@@ -109,25 +169,12 @@ int main(int argc, char *argv[])
 		pthread_join(tid[i], NULL);
 	}
 
-	// bubble sort clasic - trebuie transformat in OETS si paralelizat
-	int sorted = 0;
-	while (!sorted) {
-		sorted = 1;
-
-		for (i = 0; i < N-1; i++) {
-			if(v[i] > v[i + 1]) {
-				aux = v[i];
-				v[i] = v[i + 1];
-				v[i + 1] = aux;
-				sorted = 0;
-			}
-		}
-	}
-
 	// se afiseaza vectorul etalon
 	// se afiseaza vectorul curent
 	// se compara cele doua
 	print();
+
+	pthread_barrier_destroy(&barrier);
 
 	free(v);
 	free(vQSort);

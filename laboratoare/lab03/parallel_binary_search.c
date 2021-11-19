@@ -6,6 +6,10 @@
 #define INSIDE -1 // daca numarul cautat este in interiorul intervalului
 #define OUTSIDE -2 // daca numarul cautat este in afara intervalului
 
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
+pthread_barrier_t barrier;
+
 struct my_arg {
 	int id;
 	int N;
@@ -16,6 +20,8 @@ struct my_arg {
 	int *keep_running;
 	int *v;
 	int *found;
+
+	int *position;
 };
 
 /*
@@ -44,11 +50,59 @@ void *f(void *arg)
 	struct my_arg* data = (struct my_arg*) arg;
 
 	while (*data->keep_running) {
+
+		if(*data->keep_running == 1 && data->id == 0)
+		{
+			for(int i = 0; i < data->P; i++)
+			{
+				data->found[i] = OUTSIDE;
+			}
+		}
+		
+		pthread_barrier_wait(&barrier);
+
 		int size = *data->right - *data->left;
 
-		// TODO: implementati parallel binary search
+		int start = data->id * ceil((double)size / data->P) + *data->left;
+    	int end = MIN(size, (data->id + 1) * ceil((double)size / data->P)) + *data->left;
+
+		if (data->number == data->v[start]) {
+			*data->keep_running = 0;
+			data -> found[data->id] = INSIDE;
+			*data->position = start;
+		} 
+		else if(data->number == data->v[end - 1]){
+			*data->keep_running = 0;
+			data -> found[data->id] = INSIDE;
+			*data->position = end - 1;
+		}
+		else if (data->number >= data->v[start] && data->number <= data->v[end - 1]) {
+			*data->left = start;
+			*data->right = end;
+			data->found[data->id] = INSIDE;
+		}
+
+		pthread_barrier_wait(&barrier);
+		
+		if(data->id == 0)
+		{
+			int found = OUTSIDE;
+			for(int i = 0; i < data->P; i++)
+			{
+				if(*data->found == INSIDE){
+					found = INSIDE;
+					break;
+				}
+			}
+			if (found == OUTSIDE){
+				*data ->keep_running = 0;
+			}
+		}
+		pthread_barrier_wait(&barrier);
+
 	}
 
+	pthread_exit(NULL);
 	return NULL;
 }
 
@@ -81,7 +135,10 @@ int main(int argc, char *argv[])
 	P = atoi(argv[2]);
 	number = atoi(argv[3]);
 
+	pthread_barrier_init(&barrier, NULL, P);
+
 	keep_running = 1;
+	int position = -1;
 	left = 0;
 	right = N;
 
@@ -92,6 +149,10 @@ int main(int argc, char *argv[])
 
 	for (int i = 0; i < N; i++) {
 		v[i] = i * 2;
+	}
+
+	for (int i = 0; i < P; i++) {
+		found[i] = OUTSIDE;
 	}
 
 	display_vector(v, N);
@@ -106,6 +167,7 @@ int main(int argc, char *argv[])
 		arguments[i].keep_running = &keep_running;
 		arguments[i].v = v;
 		arguments[i].found = found;
+		arguments[i].position = &position;
 
 		r = pthread_create(&threads[i], NULL, f, &arguments[i]);
 
@@ -122,6 +184,24 @@ int main(int argc, char *argv[])
 			printf("Eroare la asteptarea thread-ului %d\n", i);
 			exit(-1);
 		}
+	}
+
+	pthread_barrier_destroy(&barrier);
+
+	struct my_arg* data = &arguments[0];
+	*found = OUTSIDE;
+	for (int i = 0; i < P; i++)
+	{
+		if (data->found[i] == INSIDE && *data->position != -1)
+		{
+			*found = INSIDE;
+			printf ("FOUND AT %d\n", *data->position);
+			break;
+		}
+	}
+	if(*found == OUTSIDE)
+	{
+		printf ("DOESN'T EXIST\n");
 	}
 
 	free(v);

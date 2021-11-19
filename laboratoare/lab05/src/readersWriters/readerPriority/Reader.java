@@ -20,9 +20,22 @@ public class Reader extends Thread {
 
         do {
             // TODO
-
+            try {
+                Main.mutexNumberOfReaders.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             Main.currentReaders++;
             // TODO
+            if (Main.currentReaders == 1) {
+                try {
+                    Main.readWriteSem.acquire();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            Main.mutexNumberOfReaders.release();
 
             try {
                 Thread.sleep(100);
@@ -33,8 +46,18 @@ public class Reader extends Thread {
             Main.hasRead[id] = true;
 
             // TODO
+            try {
+                Main.mutexNumberOfReaders.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             Main.currentReaders--;
             // TODO
+            if (Main.currentReaders == 0) {
+                Main.readWriteSem.release();
+            }
+
+            Main.mutexNumberOfReaders.release();
 
         } while (!Main.hasRead[id]);
     }
