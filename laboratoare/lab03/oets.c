@@ -90,7 +90,9 @@ void swap(int *a, int *b) {
 
 void* bubbleSort(void* arg)
 {
-    int id          = *(int*)arg;
+
+    int id = *(int*)arg;
+
     int start = id * ceil((double)N / P);
     int end = MIN(N, (id + 1) * ceil((double)N / P));
 	
@@ -115,12 +117,13 @@ void* bubbleSort(void* arg)
 	endEven = MIN(N - 1, endEven);
 	endOdd = MIN(N - 1, endOdd);
 
-
-    while(!sorted) {
+	int nr = 0;
+	while (!sorted) {
+		nr++;
         pthread_barrier_wait(&barrier);
         sorted = 1;
 
-        for (int i = startEven; i < end; i += 2) {
+        for (int i = startEven; i < endEven; i += 2) {
 			if(v[i] > v[i + 1]) {
 				swap(&v[i], &v[i + 1]);
 				sorted = 0;
@@ -129,7 +132,7 @@ void* bubbleSort(void* arg)
 
         pthread_barrier_wait(&barrier);
 
-        for (int i = startOdd; i < end; i += 2) {
+        for (int i = startOdd; i < endOdd; i += 2) {
 			if(v[i] > v[i + 1]) {
 				swap(&v[i], &v[i + 1]);
 				sorted = 0;
@@ -138,6 +141,7 @@ void* bubbleSort(void* arg)
 
         pthread_barrier_wait(&barrier);
     }
+	printf("nr = %d\n", nr);
 	pthread_exit(NULL);
 }
 

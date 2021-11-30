@@ -7,6 +7,7 @@
 #define OUTSIDE -2 // daca numarul cautat este in afara intervalului
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 pthread_barrier_t barrier;
 
@@ -63,23 +64,24 @@ void *f(void *arg)
 
 		int size = *data->right - *data->left;
 
-		int start = data->id * ceil((double)size / data->P) + *data->left;
+		int start = MIN(size + *data->left, data->id * ceil((double)size  / data->P) + *data->left);
     	int end = MIN(size, (data->id + 1) * ceil((double)size / data->P)) + *data->left;
 
-		if (data->number == data->v[start]) {
-			*data->keep_running = 0;
-			data -> found[data->id] = INSIDE;
-			*data->position = start;
-		} 
-		else if(data->number == data->v[end - 1]){
-			*data->keep_running = 0;
-			data -> found[data->id] = INSIDE;
-			*data->position = end - 1;
-		}
-		else if (data->number >= data->v[start] && data->number <= data->v[end - 1]) {
+
+		if (data->number >= data->v[start] && data->number <= data->v[end - 1]) {
 			*data->left = start;
-			*data->right = end;
+			*data->right = end - 1;
 			data->found[data->id] = INSIDE;
+
+			if (data->number == data->v[start]) {
+			*data->keep_running = 0;
+			*data->position = start;
+			} 
+
+			if(data->number == data->v[end - 1]){
+				*data->keep_running = 0;
+				*data->position = end - 1;
+			} 
 		}
 
 		pthread_barrier_wait(&barrier);
@@ -103,7 +105,6 @@ void *f(void *arg)
 	}
 
 	pthread_exit(NULL);
-	return NULL;
 }
 
 void display_vector(int *v, int size) {
@@ -186,12 +187,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	pthread_barrier_destroy(&barrier);
-
 	struct my_arg* data = &arguments[0];
 	*found = OUTSIDE;
 	for (int i = 0; i < P; i++)
 	{
+		// printf ("not found FOUND AT %d\n", *data->position);
 		if (data->found[i] == INSIDE && *data->position != -1)
 		{
 			*found = INSIDE;
@@ -203,6 +203,8 @@ int main(int argc, char *argv[])
 	{
 		printf ("DOESN'T EXIST\n");
 	}
+
+	pthread_barrier_destroy(&barrier);
 
 	free(v);
 	free(threads);

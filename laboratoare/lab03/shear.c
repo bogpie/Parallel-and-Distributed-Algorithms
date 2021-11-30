@@ -12,7 +12,6 @@ int *v;
 int *vQSort;
 int **M;
 
-int *aux;
 pthread_barrier_t barrier;
 
 void compare_vectors(int *a, int *b) {
@@ -66,7 +65,7 @@ void copy_matrix_in_vector(int *v, int **M) {
 	}
 }
 
-int cmp(const void *a, const void *b) {
+int cmpcresc(const void *a, const void *b) {
 	int A = *(int*)a;
 	int B = *(int*)b;
 	return A - B;
@@ -97,7 +96,6 @@ void init()
 	vQSort = (int*)malloc(sizeof(int) * N);
 	M = (int**)malloc(sizeof(int*) * L);
 
-	aux = (int*)malloc(sizeof(int) * L);
 
 	if (v == NULL || vQSort == NULL || M == NULL) {
 		printf("Eroare la malloc!");
@@ -133,49 +131,26 @@ void print()
 void* thread_function(void* arg)
 {
     int id = *(int*)arg;
-    int start = id * ceil((double)L / P);
-    int end = MIN(L, (id + 1) * ceil((double)L / P));
-	
-	int startEven, endEven, startOdd, endOdd;
+	int aux[L];
+	int start = id * (double)L / P;
+	int end = MIN((id + 1) * (double) L / P, L);
 
-	if (start % 2 == 0) {
-		startEven = start;
-		startOdd = start + 1;
-	} else {
-		startEven = start + 1;
-		startOdd = start;
-	}
-
-	if (end % 2 == 0) {
-		endEven = end;
-		endOdd = end + 1;
-	} else {
-		endEven = end + 1;
-		endOdd = end;
-	}
-
-	endEven = MIN(N - 1, endEven);
-	endOdd = MIN(N - 1, endOdd);
-
-	
-	for (int k = 0; k < log2(N) + 1; k++) {
-		for (int i = startOdd; i < endOdd; i += 2) {
-			qsort(M[i], L, sizeof(int), cmpdesc);
-		}
-
-		for (int i = startEven; i < endEven; i += 2) {
-			qsort(M[i], L, sizeof(int), cmp);
+	for (int k = 0; k < log(N) + 1; k ++) {
+		for (int i = start; i < end; i++) {
+			if (i % 2)
+				qsort(M[i], L, sizeof(int), cmpdesc);
+			else
+				qsort(M[i], L, sizeof(int), cmpcresc);
 		}
 
 		pthread_barrier_wait(&barrier);
-		// wait
 
 		for (int i = start; i < end; i++) {
 			for (int j = 0; j < L; j++) {
 				aux[j] = M[j][i];
 			}
 
-			qsort(aux, L, sizeof(int), cmp);
+			qsort(aux, L, sizeof(int), cmpcresc);
 
 			for (int j = 0; j < L; j++) {
 				M[j][i] = aux[j];
@@ -183,11 +158,10 @@ void* thread_function(void* arg)
 		}
 
 		pthread_barrier_wait(&barrier);
-	}
 
+	}
 	pthread_exit(NULL);
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -195,14 +169,15 @@ int main(int argc, char *argv[])
 	init();
 
 	int i;
-	//int j, k, aux[L];
 	pthread_t tid[P];
 	int thread_id[P];
 
+	pthread_barrier_init(&barrier, NULL, P);
+
 	// se sorteaza etalonul
 	copy_matrix_in_vector(vQSort, M);
-	qsort(vQSort, N, sizeof(int), cmp);
-	pthread_barrier_init(&barrier, NULL, P);
+	qsort(vQSort, N, sizeof(int), cmpcresc);
+
 
 	// se creeaza thread-urile
 	for (i = 0; i < P; i++) {
@@ -215,37 +190,9 @@ int main(int argc, char *argv[])
 		pthread_join(tid[i], NULL);
 	}
 
-	// // shear sort clasic - trebuie paralelizat
-	// for (k = 0; k < log(N) + 1; k++) {
-	// 	// se sorteaza liniile pare crescator
-	// 	// se sorteaza liniile impare descrescator
-	// 	for (i = 0; i < L; i++) {
-	// 		if (i % 2) {
-	// 			qsort(M[i], L, sizeof(int), cmpdesc);
-	// 		} else {
-	// 			qsort(M[i], L, sizeof(int), cmp);
-	// 		}
-	// 	}
-
-	// 	// se sorteaza coloanele descrescator
-	// 	for (i = 0; i < L; i++) {
-	// 		for (j = 0; j < L; j++) {
-	// 			aux[j] = M[j][i];
-	// 		}
-
-	// 		qsort(aux, L, sizeof(int), cmp);
-
-	// 		for (j = 0; j < L; j++) {
-	// 			M[j][i] = aux[j];
-	// 		}
-	// 	}
-	// }
-
-	// se afiseaza matricea
-	// se afiseaza vectorul etalon
-	// se afiseaza matricea curenta sub forma de vector
-	// se compara cele doua
 	print();
+
+	pthread_barrier_destroy(&barrier);
 
 	free(v);
 	free(vQSort);
@@ -253,7 +200,6 @@ int main(int argc, char *argv[])
 		free(M[i]);
 	}
 	free(M);
-    pthread_barrier_destroy(&barrier);
 
 	return 0;
 }
