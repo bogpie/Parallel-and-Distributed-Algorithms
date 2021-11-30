@@ -1,0 +1,9 @@
+{
+    "makefile.extensionOutputFolder": "./.vscode",
+    "files.associations": {
+        "*.pl": "prolog",
+        "string.h": "c",
+        "limits": "c",
+        "*.tcc": "c"
+    }
+}

@@ -1,0 +1,8 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/mnt/c/Users/bogdan.piele/OneDrive - Universitatea Politehnica Bucuresti/ACS/APD/laboratoare/lab03'
+gcc oets.c -o oets -lpthread -lm -Wall
+gcc shear.c -o shear -lpthread -lm -Wall
+gcc merge.c -o merge -lpthread -lm -Wall
+gcc parallel_binary_search.c -o parallel_binary_search -lpthread -lm -Wall
+make: Leaving directory '/mnt/c/Users/bogdan.piele/OneDrive - Universitatea Politehnica Bucuresti/ACS/APD/laboratoare/lab03'
+ 

@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "*.pl": "prolog",
+        "stdlib.h": "c",
+        "genetic_algorithm.h": "c",
+        "pthread.h": "c",
+        "sack_object.h": "c",
+        "individual.h": "c"
+    },
+    "cmake.configureOnOpen": false
+}

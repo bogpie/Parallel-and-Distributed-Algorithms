@@ -1,0 +1,56 @@
+ Piele Bogdan-Gabriel
+ Tema 1 APD
+
+Pentru rezolvarea temei, am pornit de la scheletul pentru varianta secvențială,
+respectiv din rezolvarea laboratorului 3 (pentru funcția de merge sort).
+
+În plus față de scheletul pentru varianta secvențială, am parsat numărul de
+thread-uri, am înlocuit sortarea cu merge sort pentru a putea împărți
+operațiile pe mai multe thread-uri, respectiv am paralelizat generarea inițială
+a indivizilor, selecția elitei și funcția de calculare a fitness-ului
+indivizilor unei generații.
+
+Pentru păstrarea valorilor între thread-uri, am folosit câte un element de
+structură de date my_arg pentru fiecare thread. Am inclus, pe lângă valorile
+deja existente în varianta secvențială
+- numărul de thread-uri,
+- id-ul thread-ului (de la 0 la noThreads - 1)
+- un vector de indivizi auxiliar pentru interschimbări (tmp)
+- un vector de  indivizi pentru memorarea temporară a indivizilor sortați ai
+unei generații (sorted)
+- o barieră.
+
+Mai mult, interschimbările de adrese ale vectorilor se efectuează pe toate
+thread-urile. Având în vedere că folosim programare paralelă, am considerat-o
+o soluție mai clară decât să folosesc un pointer dublu pentru vectori și să
+efectuez interschimbarea doar pe un thread.
+
+Folosind bariera, am reușit să efectuez calcularea unor operații până ce toate
+thread-urile au îndeplinit task-uri anterioare; spre exemplu nu efectuez
+sortarea după fitness a unor indivizi pentru o generație până ce nu a fost
+calculată valoarea pentru fiecare din aceștia, deci până ce reuniunea
+intervalelor pe care a fost făcută operația este chiar vectorul de indivizi.
+
+Merge sort-ul este efectuat analog variantei din laboratorul 3. Îmbunătățirea
+este că funcționează și pe valori ale totalului de elemente din vectorul de
+sortat non-puteri ale lui 2. Motivul este că, porțiunile delimitate pentru un
+merge au valorile de final și mijloc ne vom asigura că nu depășesc ultimul
+element corespunzător intervalului asociat un thread (folosind
+macro-ul MIN).
+
+În plus, numărul de merge-uri este incrementat în cazul împărțirii inexacte,
+deoarece înseamnă ca avem de-a face cu încă un vector mai mic decât width
+(fereastra  curentă pentru fiecare subvector al unei etape din
+merge sort).
+
+Am folosit rezultatul cmpfunc în felul următor: dacă este negativ se va
+prioritiza în sortare (se va aduce cât mai în stânga) prima valore,
+în caz contrar a doua valoare.
+
+Pentru delimitarea intervalelor pentru funcțiile de paralelizare s-au folosit
+formulele din laborator (spre exemplu, la merge sort, în urma calculării
+numărului de operații de merge, valoarea start preia merge-ul cu indicele
+data->id * merges / data->noThreads
+iar trecerea la valoarea efectivă din vector se face prin înmulțirea cu
+2 * width
+
