@@ -1,12 +1,7 @@
 package bug5;
 
 /**
- * Solve the dead-lock.
- *
- * Rewrite the code such that MyThreadA and MyThreadB to
- * execute additions (on different variables) in parallel.
- *
- * The results in valueA and valueB should be deterministic at the end.
+ * Solve the dead-lock
  */
 public class MyThreadA implements Runnable {
 

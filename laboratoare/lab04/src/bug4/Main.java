@@ -2,7 +2,6 @@ package bug4;
 
 /**
  * Why doesn't this program end? (Hint: volatile)
- * Fix the problem changing a single line of code.
  */
 public class Main extends Thread {
     volatile boolean keepRunning = true;

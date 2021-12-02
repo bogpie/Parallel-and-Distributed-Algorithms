@@ -1,0 +1,2 @@
+int start0 = id * N / P;
+    int end0 = MIN((id + 1) * N/ P, N);
