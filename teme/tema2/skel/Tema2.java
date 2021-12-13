@@ -1,7 +1,39 @@
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Scanner;
+import java.util.Vector;
 
 public class Tema2 {
+    public static void main(String[] args) throws IOException {
+        if (args.length < 3) {
+            System.err.println("Usage: Tema2 <workers> <in_file> <out_file>");
+            return;
+        }
+        int noWorkers = Integer.parseInt(args[0]);
+        String inputPath = args[1];
+        String outputPath = args[2];
+
+        Tema2 tema2 = new Tema2();
+        Vector<MapTask> mapTasks;
+        mapTasks = tema2.createMapTasks(inputPath);
+
+        mapTasks.forEach(mapTask -> System.out.println(mapTask.toString()));
+        System.out.println();
+
+        Vector<Worker> workers = new Vector<>();
+        workers.setSize(noWorkers);
+        for (int idWorker = 0; idWorker < workers.size(); ++idWorker) {
+            workers.set(idWorker, new Worker());
+        }
+
+
+        tema2.assignMapTasks(mapTasks, workers);
+
+        workers.forEach(worker -> System.out.println(worker.toString() + "\n"));
+
+    }
+
     Vector<MapTask> createMapTasks(String inputPath) throws FileNotFoundException {
         Vector<MapTask> mapTasks = new Vector<>();
         Scanner scanner = new Scanner(new File(inputPath));
@@ -27,6 +59,7 @@ public class Tema2 {
 
                 MapTask mapTask = new MapTask(document.getName(), offset, crtFragmentSize);
                 mapTasks.add(mapTask);
+                mapTask.setIndex(mapTasks.size());
                 offset += fragmentSize;
             }
         }
@@ -34,27 +67,14 @@ public class Tema2 {
         return mapTasks;
     }
 
-    private void printMapTasks(Vector<MapTask> mapTasks) {
-        for (MapTask task : mapTasks) {
-            System.out.println(task);
+
+    private void assignMapTasks(Vector<MapTask> mapTasks, Vector<Worker> workers) {
+        int idWorker = 0;
+        for (MapTask mapTask : mapTasks) {
+            Worker worker = workers.get((idWorker++) % workers.size());
+            Vector<MapTask> workerMapTasks = worker.getMapTasks();
+            workerMapTasks.add(mapTask);
         }
-    }
-
-    public static void main(String[] args) throws IOException {
-        if (args.length < 3) {
-            System.err.println("Usage: Tema2 <workers> <in_file> <out_file>");
-            return;
-        }
-        String inputPath = args[1];
-        String outputPath = args[2];
-
-        Tema2 tema2 = new Tema2();
-        Vector<MapTask> mapTasks;
-        mapTasks = tema2.createMapTasks(inputPath);
-        tema2.printMapTasks(mapTasks);
-
-        FileWriter fileWriter = new FileWriter(outputPath);
-        fileWriter.close();
     }
 }
 

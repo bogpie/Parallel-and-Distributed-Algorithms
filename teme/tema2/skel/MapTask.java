@@ -1,4 +1,9 @@
 public class MapTask {
+    private String name;
+    private int offset;
+    private int dimension;
+    private int index;
+
     public String getName() {
         return name;
     }
@@ -23,9 +28,14 @@ public class MapTask {
         this.dimension = dimension;
     }
 
-    private String name;
-    private int offset;
-    private int dimension;
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
 
     public MapTask(String name, int offset, int dimension) {
         this.name = name;
@@ -35,7 +45,7 @@ public class MapTask {
 
     @Override
     public String toString() {
-        return "MapTask{" +
+        return "MapTask{" + index + ": " +
                 "name='" + name + '\'' +
                 ", offset=" + offset +
                 ", dimension=" + dimension +
