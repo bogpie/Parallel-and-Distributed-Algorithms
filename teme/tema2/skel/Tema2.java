@@ -3,6 +3,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Tema2 {
     public static void main(String[] args) throws IOException {
@@ -15,26 +17,43 @@ public class Tema2 {
         String outputPath = args[2];
 
         Tema2 tema2 = new Tema2();
-        Vector<MapTask> mapTasks;
-        mapTasks = tema2.createMapTasks(inputPath);
+        Vector<MapTask> mapTasks = new Vector<>();
+        mapTasks = tema2.mapStage(noWorkers, inputPath);
+        mapTasks.forEach(mapTask -> System.out.println(mapTask.getResult()));
+    }
 
-        mapTasks.forEach(mapTask -> System.out.println(mapTask.toString()));
-        System.out.println();
+    Vector<MapTask> mapStage(int noWorkers, String inputPath)
+            throws FileNotFoundException {
+        ExecutorService pool = Executors.newFixedThreadPool(noWorkers);
+        Vector<MapTask> mapTasks = createMapTasks(inputPath, pool);
 
+        for (MapTask mapTask : mapTasks) {
+            pool.submit(mapTask);
+        }
+        pool.shutdown();
+        while (!pool.isTerminated()) {
+            // Java warns in case of empty loop bodies
+            if (pool.isTerminated()) {
+                break;
+            }
+        }
+        return mapTasks;
+    }
+
+    void initializeWorkers(int noWorkers, Vector<MapTask> mapTasks) {
         Vector<Worker> workers = new Vector<>();
+
         workers.setSize(noWorkers);
         for (int idWorker = 0; idWorker < workers.size(); ++idWorker) {
             workers.set(idWorker, new Worker());
         }
-
-
-        tema2.assignMapTasks(mapTasks, workers);
-
+        assignMapTasks(mapTasks, workers);
         workers.forEach(worker -> System.out.println(worker.toString() + "\n"));
 
     }
 
-    Vector<MapTask> createMapTasks(String inputPath) throws FileNotFoundException {
+
+    Vector<MapTask> createMapTasks(String inputPath, ExecutorService pool) throws FileNotFoundException {
         Vector<MapTask> mapTasks = new Vector<>();
         Scanner scanner = new Scanner(new File(inputPath));
         int fragmentSize = scanner.nextInt();
@@ -57,9 +76,10 @@ public class Tema2 {
                     crtFragmentSize = document.getDimension() - offset;
                 }
 
-                MapTask mapTask = new MapTask(document.getName(), offset, crtFragmentSize);
+                MapTask mapTask =
+                        new MapTask(document.getName(), offset,
+                                crtFragmentSize, mapTasks.size(), pool);
                 mapTasks.add(mapTask);
-                mapTask.setIndex(mapTasks.size());
                 offset += fragmentSize;
             }
         }

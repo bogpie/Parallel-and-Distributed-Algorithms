@@ -6,11 +6,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
 
-	public static void main(String[] args) {
-		AtomicInteger inQueue = new AtomicInteger(0);
-		ExecutorService tpe = Executors.newFixedThreadPool(4);
+    public static void main(String[] args) {
+        AtomicInteger inQueue = new AtomicInteger(0);
+        ExecutorService tpe = Executors.newFixedThreadPool(4);
 
-		inQueue.incrementAndGet();
-		tpe.submit(new MyRunnable("files", tpe, inQueue));
-	}
+        inQueue.incrementAndGet();
+        String userDir = System.getProperty("user.dir");
+        tpe.submit(new MyRunnable
+                (userDir + "/laboratoare/lab07/files", tpe, inQueue));
+
+        while (inQueue.get() != 0) {
+            System.out.println(inQueue);
+
+        }
+    }
 }
