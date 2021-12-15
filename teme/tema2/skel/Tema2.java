@@ -5,8 +5,17 @@ import java.util.Scanner;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class Tema2 {
+    Vector<Document> documents;
+    int fragmentDimension;
+
+    public Tema2() {
+        documents = new Vector<>();
+        fragmentDimension = 0;
+    }
+
     public static void main(String[] args) throws IOException {
         if (args.length < 3) {
             System.err.println("Usage: Tema2 <workers> <in_file> <out_file>");
@@ -17,15 +26,37 @@ public class Tema2 {
         String outputPath = args[2];
 
         Tema2 tema2 = new Tema2();
-        Vector<MapTask> mapTasks = new Vector<>();
-        mapTasks = tema2.mapStage(noWorkers, inputPath);
-        mapTasks.forEach(mapTask -> System.out.println(mapTask.getResult()));
+        Vector<MapTask> mapTasks = tema2.mapStage(noWorkers, inputPath);
+        Vector<MapTaskResult> mapTaskResults =
+                mapTasks.stream().
+                        map(MapTask::getResult).
+                        collect(Collectors.toCollection(Vector::new));
+
+        Vector<ReduceTask> reduceTasks = tema2.reduceStage(mapTaskResults);
+        reduceTasks.forEach(System.out::println);
+    }
+
+    Vector<ReduceTask> reduceStage(Vector<MapTaskResult> mapTaskResults) {
+        Vector<ReduceTask> reduceTasks = new Vector<>();
+        for (Document document : documents) {
+            reduceTasks.add(new ReduceTask(document));
+        }
+
+        for (MapTaskResult mapTaskResult : mapTaskResults) {
+            ReduceTask reduceTask =
+                    reduceTasks.stream().filter(reduceTaskInFilter ->
+                            reduceTaskInFilter.getDocument().getName().equals(mapTaskResult.getName()))
+                            .collect(Collectors.toList())
+                            .get(0);
+            reduceTask.getMapTaskResults().add(mapTaskResult);
+        }
+        return reduceTasks;
     }
 
     Vector<MapTask> mapStage(int noWorkers, String inputPath)
             throws FileNotFoundException {
         ExecutorService pool = Executors.newFixedThreadPool(noWorkers);
-        Vector<MapTask> mapTasks = createMapTasks(inputPath, pool);
+        Vector<MapTask> mapTasks = createMapTasks(inputPath);
 
         for (MapTask mapTask : mapTasks) {
             pool.submit(mapTask);
@@ -53,10 +84,35 @@ public class Tema2 {
     }
 
 
-    Vector<MapTask> createMapTasks(String inputPath, ExecutorService pool) throws FileNotFoundException {
+    Vector<MapTask> createMapTasks(String inputPath)
+            throws FileNotFoundException {
         Vector<MapTask> mapTasks = new Vector<>();
+        documents = getDocuments(inputPath);
+
+        for (Document document : documents) {
+            int offset = 0;
+
+            while (document.getDimension() - offset > 0) {
+                int crtFragmentSize = fragmentDimension;
+                if (document.getDimension() - offset - fragmentDimension < 0) {
+                    crtFragmentSize = document.getDimension() - offset;
+                }
+
+                MapTask mapTask =
+                        new MapTask(document.getName(), offset,
+                                crtFragmentSize, mapTasks.size());
+                mapTasks.add(mapTask);
+                offset += fragmentDimension;
+            }
+        }
+
+        return mapTasks;
+    }
+
+    Vector<Document> getDocuments(String inputPath)
+            throws FileNotFoundException {
         Scanner scanner = new Scanner(new File(inputPath));
-        int fragmentSize = scanner.nextInt();
+        fragmentDimension = scanner.nextInt();
         int noDocuments = scanner.nextInt();
         scanner.nextLine(); // read new line
         Vector<Document> documents = new Vector<>();
@@ -66,25 +122,7 @@ public class Tema2 {
             File file = new File(path);
             documents.add(new Document(file.getName(), (int) file.length()));
         }
-
-        for (Document document : documents) {
-            int offset = 0;
-
-            while (document.getDimension() - offset > 0) {
-                int crtFragmentSize = fragmentSize;
-                if (document.getDimension() - offset - fragmentSize < 0) {
-                    crtFragmentSize = document.getDimension() - offset;
-                }
-
-                MapTask mapTask =
-                        new MapTask(document.getName(), offset,
-                                crtFragmentSize, mapTasks.size(), pool);
-                mapTasks.add(mapTask);
-                offset += fragmentSize;
-            }
-        }
-
-        return mapTasks;
+        return documents;
     }
 
 

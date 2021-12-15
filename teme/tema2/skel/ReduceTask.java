@@ -1,32 +1,36 @@
 import java.util.Vector;
 
 public class ReduceTask {
-    private Vector<Dictionary> dictionaries;
-    private Vector<String> maximalWords;
+    private Document document;
+    private Vector<MapTaskResult> mapTaskResults;
+
+    public ReduceTask(Document document) {
+        this.document = document;
+        mapTaskResults = new Vector<>();
+    }
 
     public ReduceTask() {
-        this.dictionaries = new Vector<>();
-        this.maximalWords = new Vector<>();
+        this.mapTaskResults = new Vector<>();
     }
 
-    public ReduceTask(Vector<Dictionary> dictionaries, Vector<String> maximalWords) {
-        this.dictionaries = dictionaries;
-        this.maximalWords = maximalWords;
+    public Document getDocument() {
+        return document;
     }
 
-    public Vector<Dictionary> getDictionaries() {
-        return dictionaries;
+    public void setDocument(Document document) {
+        this.document = document;
     }
 
-    public void setDictionaries(Vector<Dictionary> dictionaries) {
-        this.dictionaries = dictionaries;
+    public Vector<MapTaskResult> getMapTaskResults() {
+        return mapTaskResults;
     }
 
-    public Vector<String> getMaximalWords() {
-        return maximalWords;
+    public void setMapTaskResults(Vector<MapTaskResult> mapTaskResults) {
+        this.mapTaskResults = mapTaskResults;
     }
 
-    public void setMaximalWords(Vector<String> maximalWords) {
-        this.maximalWords = maximalWords;
+    @Override
+    public String toString() {
+        return document.toString() + ":\n" + mapTaskResults + "\n";
     }
 }

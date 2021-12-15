@@ -1,11 +1,11 @@
 import java.util.Vector;
 
 public class Worker {
+    private Vector<MapTask> mapTasks;
+
     public Worker() {
         mapTasks = new Vector<>();
     }
-
-    private Vector<MapTask> mapTasks;
 
     public Vector<MapTask> getMapTasks() {
         return mapTasks;

@@ -22,4 +22,12 @@ public class Document {
     public void setDimension(int dimension) {
         this.dimension = dimension;
     }
+
+    @Override
+    public String toString() {
+        return "Document{" +
+                "name='" + name + '\'' +
+                ", dimension=" + dimension +
+                '}';
+    }
 }

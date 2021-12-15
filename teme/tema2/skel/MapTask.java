@@ -2,52 +2,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import java.util.concurrent.ExecutorService;
-
-class MapTaskResult {
-    private final String name;
-
-    public void setDictionary(Dictionary dictionary) {
-        this.dictionary = dictionary;
-    }
-
-    public Dictionary getDictionary() {
-        return dictionary;
-    }
-
-    private Dictionary dictionary;
-    private Vector<String> maximalWords;
-
-    public MapTaskResult(String name) {
-        this.name = name;
-        this.dictionary = new Dictionary();
-        maximalWords = new Vector<>();
-    }
-
-    public MapTaskResult(String name, Dictionary dictionary,
-                         Vector<String> maximalWords) {
-        this.name = name;
-        this.dictionary = dictionary;
-        this.maximalWords = maximalWords;
-    }
-
-    public Vector<String> getMaximalWords() {
-        return maximalWords;
-    }
-
-    public void setMaximalWords(Vector<String> maximalWords) {
-        this.maximalWords = maximalWords;
-    }
-
-    @Override
-    public String toString() {
-        return "MapTaskResult{" +
-                "name='" + name + '\'' +
-                ", dictionary=" + dictionary +
-                ", maximalWords=" + maximalWords +
-                '}';
-    }
-}
 
 
 public class MapTask implements Runnable {
@@ -55,16 +9,16 @@ public class MapTask implements Runnable {
     private final int offset;
     private final int dimension;
     private final int index;
-    private final ExecutorService pool;
     private MapTaskResult result;
-
-    public MapTask(String name, int offset, int dimension, int index,
-                   ExecutorService pool) {
+    public MapTask(String name, int offset, int dimension, int index) {
         this.name = name;
         this.offset = offset;
         this.dimension = dimension;
         this.index = index;
-        this.pool = pool;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public MapTaskResult getResult() {
@@ -141,5 +95,53 @@ public class MapTask implements Runnable {
             e.printStackTrace();
         }
 
+    }
+}
+
+class MapTaskResult {
+    private final String name;
+    private Dictionary dictionary;
+    private Vector<String> maximalWords;
+
+    public MapTaskResult(String name) {
+        this.name = name;
+        this.dictionary = new Dictionary();
+        maximalWords = new Vector<>();
+    }
+
+    public MapTaskResult(String name, Dictionary dictionary,
+                         Vector<String> maximalWords) {
+        this.name = name;
+        this.dictionary = dictionary;
+        this.maximalWords = maximalWords;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Dictionary getDictionary() {
+        return dictionary;
+    }
+
+    public void setDictionary(Dictionary dictionary) {
+        this.dictionary = dictionary;
+    }
+
+    public Vector<String> getMaximalWords() {
+        return maximalWords;
+    }
+
+    public void setMaximalWords(Vector<String> maximalWords) {
+        this.maximalWords = maximalWords;
+    }
+
+    @Override
+    public String toString() {
+        return "MapTaskResult{" +
+                "name='" + name + '\'' +
+                ", dictionary=" + dictionary +
+                ", maximalWords=" + maximalWords +
+                "}\n";
     }
 }
