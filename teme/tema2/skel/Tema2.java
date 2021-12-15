@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.Vector;
@@ -26,17 +27,31 @@ public class Tema2 {
         String outputPath = args[2];
 
         Tema2 tema2 = new Tema2();
-        Vector<MapTask> mapTasks = tema2.mapStage(noWorkers, inputPath);
-        Vector<MapTaskResult> mapTaskResults =
-                mapTasks.stream().
-                        map(MapTask::getResult).
-                        collect(Collectors.toCollection(Vector::new));
+        Vector<MapTaskResult> mapTasksResults = tema2.mapStage(noWorkers,
+                inputPath);
 
-        Vector<ReduceTask> reduceTasks = tema2.reduceStage(mapTaskResults);
-        reduceTasks.forEach(System.out::println);
+        Vector<ReduceTaskResult> reduceTaskResults = tema2.reduceStage(noWorkers,
+                mapTasksResults);
+
+        reduceTaskResults.sort(
+                // We use a multiplication trick for better precision
+                (result1, result2) -> (int) ((result2.getRank() - result1.getRank()) * 100)
+        );
+
+
+        FileWriter fileWriter = new FileWriter(outputPath);
+        reduceTaskResults.forEach(reduceTaskResult -> {
+                    try {
+                        fileWriter.append(reduceTaskResult.toString()).append("\n");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+        );
+        fileWriter.close();
     }
 
-    Vector<ReduceTask> reduceStage(Vector<MapTaskResult> mapTaskResults) {
+    Vector<ReduceTask> createReduceTasks(Vector<MapTaskResult> mapTaskResults) {
         Vector<ReduceTask> reduceTasks = new Vector<>();
         for (Document document : documents) {
             reduceTasks.add(new ReduceTask(document));
@@ -45,7 +60,10 @@ public class Tema2 {
         for (MapTaskResult mapTaskResult : mapTaskResults) {
             ReduceTask reduceTask =
                     reduceTasks.stream().filter(reduceTaskInFilter ->
-                            reduceTaskInFilter.getDocument().getName().equals(mapTaskResult.getName()))
+                            reduceTaskInFilter.
+                                    getDocument().
+                                    getName().
+                                    equals(mapTaskResult.getName()))
                             .collect(Collectors.toList())
                             .get(0);
             reduceTask.getMapTaskResults().add(mapTaskResult);
@@ -53,10 +71,31 @@ public class Tema2 {
         return reduceTasks;
     }
 
-    Vector<MapTask> mapStage(int noWorkers, String inputPath)
-            throws FileNotFoundException {
+    Vector<ReduceTaskResult> reduceStage(int noWorkers,
+                                         Vector<MapTaskResult> mapTaskResults) {
+        Vector<ReduceTask> reduceTasks = createReduceTasks(mapTaskResults);
         ExecutorService pool = Executors.newFixedThreadPool(noWorkers);
+
+        for (ReduceTask reduceTask : reduceTasks) {
+            pool.submit(reduceTask);
+        }
+        pool.shutdown();
+
+        while (!pool.isTerminated()) {
+            // Java warns in case of empty loop bodies
+            if (pool.isTerminated()) {
+                break;
+            }
+        }
+        return reduceTasks.stream()
+                .map(ReduceTask::getResult)
+                .collect(Collectors.toCollection(Vector::new));
+    }
+
+    Vector<MapTaskResult> mapStage(int noWorkers, String inputPath)
+            throws FileNotFoundException {
         Vector<MapTask> mapTasks = createMapTasks(inputPath);
+        ExecutorService pool = Executors.newFixedThreadPool(noWorkers);
 
         for (MapTask mapTask : mapTasks) {
             pool.submit(mapTask);
@@ -68,21 +107,10 @@ public class Tema2 {
                 break;
             }
         }
-        return mapTasks;
+        return mapTasks.stream()
+                .map(MapTask::getResult)
+                .collect(Collectors.toCollection(Vector::new));
     }
-
-    void initializeWorkers(int noWorkers, Vector<MapTask> mapTasks) {
-        Vector<Worker> workers = new Vector<>();
-
-        workers.setSize(noWorkers);
-        for (int idWorker = 0; idWorker < workers.size(); ++idWorker) {
-            workers.set(idWorker, new Worker());
-        }
-        assignMapTasks(mapTasks, workers);
-        workers.forEach(worker -> System.out.println(worker.toString() + "\n"));
-
-    }
-
 
     Vector<MapTask> createMapTasks(String inputPath)
             throws FileNotFoundException {
@@ -105,7 +133,6 @@ public class Tema2 {
                 offset += fragmentDimension;
             }
         }
-
         return mapTasks;
     }
 
@@ -123,16 +150,6 @@ public class Tema2 {
             documents.add(new Document(file.getName(), (int) file.length()));
         }
         return documents;
-    }
-
-
-    private void assignMapTasks(Vector<MapTask> mapTasks, Vector<Worker> workers) {
-        int idWorker = 0;
-        for (MapTask mapTask : mapTasks) {
-            Worker worker = workers.get((idWorker++) % workers.size());
-            Vector<MapTask> workerMapTasks = worker.getMapTasks();
-            workerMapTasks.add(mapTask);
-        }
     }
 }
 

@@ -1,6 +1,6 @@
 public class Document {
     private String name;
-    private int dimension;
+    private final int dimension;
 
     public Document(String name, int dimension) {
         this.name = name;
@@ -17,10 +17,6 @@ public class Document {
 
     public int getDimension() {
         return dimension;
-    }
-
-    public void setDimension(int dimension) {
-        this.dimension = dimension;
     }
 
     @Override

@@ -10,6 +10,7 @@ public class MapTask implements Runnable {
     private final int dimension;
     private final int index;
     private MapTaskResult result;
+
     public MapTask(String name, int offset, int dimension, int index) {
         this.name = name;
         this.offset = offset;
@@ -45,11 +46,13 @@ public class MapTask implements Runnable {
             RandomAccessFile file = new RandomAccessFile(path, "r");
 
             // Read a letter before to check whether first word is complete
-            byte[] bytes = new byte[dimension + 1];
+            int newDimension = dimension;
             if (offset != 0) {
+                ++newDimension;
                 file.seek(offset - 1);
             }
-            file.read(bytes, 0, dimension + 1);
+            byte[] bytes = new byte[newDimension];
+            file.read(bytes, 0, newDimension);
 
             String string = new String(bytes);
             String lastCharacter = string.substring(string.length() - 1);
@@ -77,7 +80,6 @@ public class MapTask implements Runnable {
             int maximum = -1;
             while (tokenizer.hasMoreTokens()) {
                 String word = tokenizer.nextToken();
-                // System.out.println(index + 1 + ": " + word);
                 int length = word.length();
                 if (length > maximum) {
                     maximum = length;
@@ -99,41 +101,36 @@ public class MapTask implements Runnable {
 }
 
 class MapTaskResult {
-    private final String name;
+    private String name;
     private Dictionary dictionary;
     private Vector<String> maximalWords;
 
-    public MapTaskResult(String name) {
-        this.name = name;
-        this.dictionary = new Dictionary();
+    public MapTaskResult() {
+        this("");
+        dictionary = new Dictionary();
         maximalWords = new Vector<>();
     }
 
-    public MapTaskResult(String name, Dictionary dictionary,
-                         Vector<String> maximalWords) {
+    public MapTaskResult(String name) {
         this.name = name;
-        this.dictionary = dictionary;
-        this.maximalWords = maximalWords;
+        dictionary = new Dictionary();
+        maximalWords = new Vector<>();
     }
 
     public String getName() {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public Dictionary getDictionary() {
         return dictionary;
     }
 
-    public void setDictionary(Dictionary dictionary) {
-        this.dictionary = dictionary;
-    }
-
     public Vector<String> getMaximalWords() {
         return maximalWords;
-    }
-
-    public void setMaximalWords(Vector<String> maximalWords) {
-        this.maximalWords = maximalWords;
     }
 
     @Override

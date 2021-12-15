@@ -8,10 +8,6 @@ public class Dictionary {
         map = new TreeMap<>(Comparator.reverseOrder());
     }
 
-    public Dictionary(TreeMap<Integer, Integer> map) {
-        this.map = map;
-    }
-
     public TreeMap<Integer, Integer> getMap() {
         return map;
     }
